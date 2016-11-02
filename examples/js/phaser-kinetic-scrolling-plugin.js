@@ -10,14 +10,14 @@
     'use strict';
 
     /**
-    * Kinetic Scrolling is a Phaser plugin that allows vertical and horizontal scrolling with kinetic motion.
-    * It works with the Phaser.Camera
-    *
-    * @class Phaser.Plugin.KineticScrolling
-    * @constructor
-    * @param {Object} game - The Game object is the instance of the game, where the magic happens.
-    * @param {Any} parent  - The object that owns this plugin, usually Phaser.PluginManager.
-    */
+     * Kinetic Scrolling is a Phaser plugin that allows vertical and horizontal scrolling with kinetic motion.
+     * It works with the Phaser.Camera
+     *
+     * @class Phaser.Plugin.KineticScrolling
+     * @constructor
+     * @param {Object} game - The Game object is the instance of the game, where the magic happens.
+     * @param {Any} parent  - The object that owns this plugin, usually Phaser.PluginManager.
+     */
     Phaser.Plugin.KineticScrolling = function (game, parent) {
         Phaser.Plugin.call(this, game, parent);
 
@@ -53,26 +53,32 @@
             verticalScroll: false,
             horizontalWheel: true,
             verticalWheel: false,
-            deltaWheel: 40
+            deltaWheel: 40,
+            button: Phaser.Plugin.KineticScrolling.BTN_ALL
         };
     };
 
     Phaser.Plugin.KineticScrolling.prototype = Object.create(Phaser.Plugin.prototype);
     Phaser.Plugin.KineticScrolling.prototype.constructor = Phaser.Plugin.KineticScrolling;
 
+    Phaser.Plugin.KineticScrolling.BTN_LEFT = 1;
+    Phaser.Plugin.KineticScrolling.BTN_RIGHT = 2;
+    Phaser.Plugin.KineticScrolling.BTN_MIDDLE = 3;
+    Phaser.Plugin.KineticScrolling.BTN_ALL = 4;
+
     /**
-    * Change Default Settings of the plugin
-    *
-    * @method Phaser.Plugin.KineticScrolling#configure
-    * @param {Object}  [options] - Object that contain properties to change the behavior of the plugin.
-    * @param {number}  [options.timeConstantScroll=325] - The rate of deceleration for the scrolling.
-    * @param {boolean} [options.kineticMovement=true]   - Enable or Disable the kinematic motion.
-    * @param {boolean} [options.horizontalScroll=true]  - Enable or Disable the horizontal scrolling.
-    * @param {boolean} [options.verticalScroll=false]   - Enable or Disable the vertical scrolling.
-    * @param {boolean} [options.horizontalWheel=true]   - Enable or Disable the horizontal scrolling with mouse wheel.
-    * @param {boolean} [options.verticalWheel=false]    - Enable or Disable the vertical scrolling with mouse wheel.
-    * @param {number}  [options.deltaWheel=40]          - Delta increment of the mouse wheel.
-    */
+     * Change Default Settings of the plugin
+     *
+     * @method Phaser.Plugin.KineticScrolling#configure
+     * @param {Object}  [options] - Object that contain properties to change the behavior of the plugin.
+     * @param {number}  [options.timeConstantScroll=325] - The rate of deceleration for the scrolling.
+     * @param {boolean} [options.kineticMovement=true]   - Enable or Disable the kinematic motion.
+     * @param {boolean} [options.horizontalScroll=true]  - Enable or Disable the horizontal scrolling.
+     * @param {boolean} [options.verticalScroll=false]   - Enable or Disable the vertical scrolling.
+     * @param {boolean} [options.horizontalWheel=true]   - Enable or Disable the horizontal scrolling with mouse wheel.
+     * @param {boolean} [options.verticalWheel=false]    - Enable or Disable the vertical scrolling with mouse wheel.
+     * @param {number}  [options.deltaWheel=40]          - Delta increment of the mouse wheel.
+     */
     Phaser.Plugin.KineticScrolling.prototype.configure = function (options) {
 
         if (options) {
@@ -86,26 +92,36 @@
     };
 
     /**
-    * Start the Plugin.
-    *
-    * @method Phaser.Plugin.KineticScrolling#start
-    */
+     * Start the Plugin.
+     *
+     * @method Phaser.Plugin.KineticScrolling#start
+     */
     Phaser.Plugin.KineticScrolling.prototype.start = function () {
 
-        this.game.input.onDown.add(this.beginMove, this);
+        switch (this.settings.button) {
+            case Phaser.Plugin.KineticScrolling.BTN_RIGHT:
+                this.game.input.mousePointer.rightButton.onDown.add(this.beginMove, this);
+                this.game.input.mousePointer.rightButton.onUp.add(this.endMove, this);
+                break;
+            case Phaser.Plugin.KineticScrolling.BTN_LEFT:
+                break;
+            case Phaser.Plugin.KineticScrolling.BTN_MIDDLE:
+                break;
+            case Phaser.Plugin.KineticScrolling.BTN_ALL:
+            default:
+                this.game.input.onDown.add(this.beginMove, this);
+                this.game.input.onUp.add(this.endMove, this);
+                break;
+        }
 
         this.callbackID = this.game.input.addMoveCallback(this.moveCamera, this);
-
-        this.game.input.onUp.add(this.endMove, this);
-
         this.game.input.mouse.mouseWheelCallback = this.mouseWheel.bind(this);
     };
 
     /**
-    * Event triggered when a pointer is pressed down, resets the value of variables.
-    */
+     * Event triggered when a pointer is pressed down, resets the value of variables.
+     */
     Phaser.Plugin.KineticScrolling.prototype.beginMove = function () {
-
         this.startX = this.game.input.x;
         this.startY = this.game.input.y;
 
@@ -118,13 +134,12 @@
     };
 
     /**
-    * Event triggered when the activePointer receives a DOM move event such as a mousemove or touchmove.
-    * The camera moves according to the movement of the pointer, calculating the velocity.
-    */
+     * Event triggered when the activePointer receives a DOM move event such as a mousemove or touchmove.
+     * The camera moves according to the movement of the pointer, calculating the velocity.
+     */
     Phaser.Plugin.KineticScrolling.prototype.moveCamera = function (pointer, x, y) {
 
         if (!this.pressedDown) return;
-
         this.now = Date.now();
         var elapsed = this.now - this.timestamp;
         this.timestamp = this.now;
@@ -148,10 +163,10 @@
     };
 
     /**
-    * Event triggered when a pointer is released, calculates the automatic scrolling.
-    */
+     * Event triggered when a pointer is released, calculates the automatic scrolling.
+     */
     Phaser.Plugin.KineticScrolling.prototype.endMove = function () {
-        
+
         this.pressedDown = false;
         this.autoScrollX = false;
         this.autoScrollY = false;
@@ -186,9 +201,9 @@
     };
 
     /**
-    * Event called after all the core subsystems and the State have updated, but before the render.
-    * Create the deceleration effect.
-    */
+     * Event called after all the core subsystems and the State have updated, but before the render.
+     * Create the deceleration effect.
+     */
     Phaser.Plugin.KineticScrolling.prototype.update = function () {
 
         this.elapsed = Date.now() - this.timestamp;
@@ -222,7 +237,7 @@
         if(!this.autoScrollX && !this.autoScrollY){
             this.dragging = false;
         }
-        
+
         if (this.settings.horizontalWheel  && this.velocityWheelXAbs > 0.1) {
             this.dragging = true;
             this.amplitudeX = 0;
@@ -240,8 +255,8 @@
     };
 
     /**
-    * Event called when the mousewheel is used, affect the direction of scrolling.
-    */
+     * Event called when the mousewheel is used, affect the direction of scrolling.
+     */
     Phaser.Plugin.KineticScrolling.prototype.mouseWheel = function (event) {
         if (!this.settings.horizontalWheel && !this.settings.verticalWheel) return;
 
@@ -270,10 +285,10 @@
     };
 
     /**
-    * Stop the Plugin.
-    *
-    * @method Phaser.Plugin.KineticScrolling#stop
-    */
+     * Stop the Plugin.
+     *
+     * @method Phaser.Plugin.KineticScrolling#stop
+     */
     Phaser.Plugin.KineticScrolling.prototype.stop = function () {
 
         this.game.input.onDown.remove(this.beginMove, this);
